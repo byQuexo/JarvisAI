@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Jarvis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+<body>
+    <button id="record">Record</button>
+    <button id="ask">Ask AI</button>
+    <!-- Display the Audio File -->
+    <audio controls id="audio"></audio>
+
+    <br>
+    <br>
+    <p id="answer"></p>
+    <script>
+        var isRecording = false;
+        const rec = document.getElementById('record');
+        const recordAudio = () => {
+          return new Promise(resolve => {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+              .then(stream => {
+                const mediaRecorder = new MediaRecorder(stream);
+                const audioChunks = [];
+                mediaRecorder.addEventListener("dataavailable", event => {
+                  audioChunks.push(event.data);
+                });
+
+                const start = () => {
+                  mediaRecorder.start();
+                };
+
+                const stop = () => {
+                  return new Promise(resolve => {
+                    mediaRecorder.addEventListener("stop", () => {
+                        const audioBlob = new Blob(audioChunks, {type: 'audio/flac'});
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const audioElement = document.getElementById('audio');
+                        audioElement.src = audioUrl;
+                    });
+                    mediaRecorder.stop();
+                  });
+                };
+                resolve({ start, stop });
+              });
+          });
+        };
+        rec.addEventListener("click", async () => {
+            const record = async () => {
+                isRecording = true;
+                rec.textContent = "Recording...";
+                const recorder = await recordAudio();
+                recorder.start();
+                setTimeout(async () => {
+                  await recorder.stop();
+                  rec.disabled = false;
+                  rec.textContent = "Record";
+                  isRecording = false;
+                }, 5000);
+            }
+
+            const stop = async () => {
+                isRecording = false;
+                rec.textContent = "Record";
+                const recorder = await recordAudio();
+                recorder.stop();
+            }
+
+            if (!isRecording && rec.textContent === "Record") {
+                await record();
+            }else if (isRecording && rec.textContent === "Recording...") {
+                await stop();
+            }
+        });
+
+
+        const ask = document.getElementById('ask');
+        //send audio to server
+        ask.addEventListener("click", async () => {
+            const audioElement = document.getElementById('audio');
+            const audioBlob = await fetch(audioElement.src).then(r => r.blob());
+            const blob = new Blob([audioBlob], {type: 'audio/flac'});
+            console.log(blob);
+            const formData = new FormData();
+            formData.append('audio', blob, 'audio.flac');
+            const response = await fetch('http://127.0.0.1:5000/audio', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            const answer = document.getElementById('answer');
+            answer.textContent = data.text;
+        });
+    </script>
+</body>
+</html>
