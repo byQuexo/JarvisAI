@@ -1,7 +1,7 @@
 # JarvisAI
 
  mit benutzung von: 
- - PyTorch 
+ - PyTorch / PyTorchAudio
  - Huggingface (Transformer)
  - OpenAIs Whisper (large v3)
  - ffmpeg
