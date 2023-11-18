@@ -52,19 +52,15 @@
                 rec.textContent = "Recording...";
                 const recorder = await recordAudio();
                 recorder.start();
-                setTimeout(async () => {
-                  await recorder.stop();
-                  rec.disabled = false;
-                  rec.textContent = "Record";
-                  isRecording = false;
-                }, 5000);
+                //TODO Change it so that it stops after pressing the button again
+                
             }
 
             const stop = async () => {
                 isRecording = false;
                 rec.textContent = "Record";
                 const recorder = await recordAudio();
-                recorder.stop();
+                return recorder.stop();
             }
 
             if (!isRecording && rec.textContent === "Record") {
